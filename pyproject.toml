@@ -1,0 +1,13 @@
+[project]
+name = "personal-finance-accounting-system"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "datetime>=5.5",
+    "fastapi[all]>=0.117.1",
+    "pydantic>=2.11.9",
+    "typing>=3.10.0.0",
+    "uvicorn>=0.36.0",
+]
