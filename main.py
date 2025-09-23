@@ -13,36 +13,43 @@ class Transaction(BaseModel):
 
 app = FastAPI(title="Personal Finance Tracker")
 
-transactions_db = [] # Пока что это БД
+transactions_db = {} # Пока что это БД
+next_id = 1
 
 @app.get("/")
 async def root():
     return {"message": "Добро пожаловать в систему учета финансов!"}
 
-@app.get("/transactions") # Метод GET используется для получения данных с сервера
+# Возвращаем все транзакции из нашего "хранилища"
+@app.get("/transactions") 
 async def get_transactions():
-    # Возвращаем все транзакции из нашего "хранилища"
-    return {"transactions": transactions_db}
+    
+    return {"transactions": list(transactions_db.values())}
 
-@app.post("/transactions") # Метод POST используется для отправки данных на сервер
-async def create_transaction(transaction: Transaction):
-    # Добавляем новую транзакцию в наш список
-    transactions_db.append(transaction)
-    return {"message": "Транзакция добавлена", "transaction": transaction}
+# Добавляем новую транзакцию в наш список
+@app.post("/transactions") 
+async def create_transaction(transaction_id: Transaction):
+    global next_id
 
-@app.delete("/transactions/{transaction_id}") # Удаляем транзакцию по ее айди
+    transaction_id.id = next_id
+    transactions_db[next_id] = transaction_id
+    next_id += 1
+    
+    return {"message": "Транзакция добавлена", "transaction": transaction_id}
+
+# Удаляем транзакцию по ее айди
+@app.delete("/transactions/{transaction_id}") 
 async def delete_transaction(transaction_id: int):
-    for transaction in transactions_db:
-        if transaction_id == transaction.id:
-            transactions_db.remove(transaction)
-            return {"message": f"Транзакция {transaction_id} удалена"}
+    if transaction_id in transactions_db:
+        del transactions_db[transaction_id]
+        return {"message": f"Транзакция {transaction_id} удалена"}
 
     return {"error": f"Транзакция {transaction_id} не найдена"}
 
+# Обновляем транзацию по айди
 @app.put("/transactions/{transaction_id}")
 async def update_transaction(transaction_id: int, updated_transaction: Transaction):
-    for index, transaction in enumerate(transactions_db):
-        if transaction_id == transaction.id:
-            transactions_db[index] = updated_transaction
-            return {"message": f"Транзакция {transaction_id} обновлена", "transaction": updated_transaction}
-    return {"error": f"Транзакция {transaction_id} не найдена"}
+    if transaction_id in transactions_db:
+        transactions_db[transaction_id] = updated_transaction
+        return {"message": f"Транзакция {transaction_id} успешно обновлена", "transaction": updated_transaction}
+    return {"error": f"Ошибка, транзакция {transaction_id} не найдена"}
